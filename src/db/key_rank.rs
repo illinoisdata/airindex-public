@@ -1,13 +1,18 @@
 use byteorder::ByteOrder;
 use byteorder::LittleEndian;
+use rand::distributions::Distribution;
 use rand::Rng;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use serde::{Serialize, Deserialize};
 use sscanf::scanf;
+use std::collections::hash_map::DefaultHasher;
 use std::fs::OpenOptions;
+use std::hash::Hash;
+use std::hash::Hasher;
 use std::io::Write;
 use std::str::from_utf8;
+use zipf::ZipfDistribution;
 
 use crate::common::error::GResult;
 use crate::index::Index;
@@ -30,6 +35,13 @@ pub struct KeyRank {
 fn deserialize_key(dbuffer: &[u8]) -> KeyT {
   LittleEndian::read_uint(dbuffer, dbuffer.len())
 }
+
+fn shuffle_idx(t: usize, n: usize) -> usize {
+  let mut s = DefaultHasher::new();
+  t.hash(&mut s);
+  (s.finish() as usize) % n
+}
+
 
 /* DB that manages key and compute their ranks */
 
@@ -107,7 +119,7 @@ impl SOSDRankDB {
     Ok(kps)
   }
 
-  pub fn generate_keyset(
+  pub fn generate_uniform_keyset(
     &self,
     kps: &KeyPositionCollection,
     keyset_path: String,
@@ -123,6 +135,31 @@ impl SOSDRankDB {
 
     for _ in 0..num_keyset {
       let idx = rng.gen_range(0..kps.len());
+      let kp = &kps[idx];  // assume key-position is sorted by key
+      writeln!(&mut keyset_file, "{} {}", kp.key, kp.position / self.array_store.data_size())?;
+    }
+    Ok(())
+  }
+
+  pub fn generate_zipf_keyset(
+    &self,
+    kps: &KeyPositionCollection,
+    keyset_path: String,
+    num_keyset: usize,
+    seed: u64,
+    power: f64,
+  ) -> GResult<()> {
+    let mut keyset_file = OpenOptions::new()
+      .create(true)
+      .write(true)
+      .truncate(true)
+      .open(keyset_path.as_str())?;
+    let mut rng = Pcg64::seed_from_u64(seed);  // "random" seed via cat typing asdasd
+    let zipf = ZipfDistribution::new(kps.len(), power)
+      .unwrap_or_else(|_| panic!("Failed to create ZipfDistribution({}, {})", kps.len(), power));
+
+    for _ in 0..num_keyset {
+      let idx = shuffle_idx(zipf.sample(&mut rng) - 1, kps.len());
       let kp = &kps[idx];  // assume key-position is sorted by key
       writeln!(&mut keyset_file, "{} {}", kp.key, kp.position / self.array_store.data_size())?;
     }

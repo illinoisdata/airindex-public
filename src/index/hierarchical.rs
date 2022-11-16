@@ -225,6 +225,8 @@ pub struct ExploreStackIndexBuilder<'a> {
   dummy_prefix_url: Url,
 
   target_layers: Option<usize>,  // if set, only build index with many layers
+
+  top_k_candidates: usize,
 }
 
 impl<'a> ExploreStackIndexBuilder<'a> {
@@ -247,6 +249,7 @@ impl<'a> ExploreStackIndexBuilder<'a> {
       dummy_storage,
       dummy_prefix_url: Url::parse("dummy:///index").unwrap(),
       target_layers: None,
+      top_k_candidates: 5,
     }
   }
 
@@ -270,7 +273,13 @@ impl<'a> ExploreStackIndexBuilder<'a> {
       dummy_storage,
       dummy_prefix_url: Url::parse("dummy:///index").unwrap(),
       target_layers: Some(target_layers),
+      top_k_candidates: 5,
     }
+  }
+
+  pub fn set_top_k_candidates(mut self, top_k_candidates: usize) -> Self {
+    self.top_k_candidates = top_k_candidates;
+    self
   }
 
   fn summarize_loads(&self, loads: &[LoadDistribution]) -> Vec<usize> {
@@ -307,7 +316,7 @@ impl<'a> ExploreStackIndexBuilder<'a> {
       let mut maybe_drafts = None;
       let mut drafts = self.drafter.draft_many(kps, self.profile);
       drafts.sort_by_key(|draft| draft.cost);
-      for model_draft in drafts.into_iter().take(5) {
+      for model_draft in drafts.into_iter().take(self.top_k_candidates) {
         // calculate cost at this layer
         let current_loads = self.summarize_loads(&model_draft.serde.get_load());
         let current_costs = self.profile.sequential_cost(&current_loads);

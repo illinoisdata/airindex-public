@@ -105,12 +105,18 @@ pub struct Cli {
   /// upperbound to load hyperparameters
   #[structopt(long, default_value = "1048576")]
   high_load: usize,
+  /// btree load hyperparameters
+  #[structopt(long, default_value = "4096")]
+  btree_load: usize,
   /// exponentiation step for load hyperparameters
   #[structopt(long, default_value = "2.0")]
   step_load: f64,
   /// target number of layers (enb index only)
   #[structopt(long)]
   target_layers: Option<usize>,
+  /// top-k candidates to select at each branching
+  #[structopt(long)]
+  top_k_candidates: Option<usize>,
 
 
   /* For testing/debugging */
@@ -290,13 +296,14 @@ impl Experiment {
     let low_load = args.low_load;
     let high_load = args.high_load;
     let step_load = args.step_load;
+    let btree_load = args.btree_load;
     let mut model_drafter = MultipleDrafter::new();
     for index_drafter in &args.index_drafters {
       let sub_drafter = match index_drafter.as_str() {
         "step" => StepMultipleDrafter::exponentiation(low_load, high_load, step_load, 16),
         "band_greedy" => BandMultipleDrafter::greedy_exp(low_load, high_load, step_load),
         "band_equal" => BandMultipleDrafter::equal_exp(low_load, high_load, step_load),
-        "btree" => StepMultipleDrafter::exponentiation(4096, 4096, 2.0, 255),
+        "btree" => StepMultipleDrafter::exponentiation(btree_load, btree_load, 2.0, btree_load / 16 - 1),
         _ => panic!("Invalid index_drafter= {}", index_drafter),
       };
       model_drafter = model_drafter.extend(sub_drafter);
@@ -322,29 +329,37 @@ impl Experiment {
         ))
       },
       "enb" => {
-        Box::new(ExploreStackIndexBuilder::new(
+        let mut enb = ExploreStackIndexBuilder::new(
           self.db_context.storage.as_ref().unwrap(),
           model_drafter,
           profile,
           self.db_context.store_prefix.as_ref().unwrap().clone(),
-        ))
+        );
+        if let Some(top_k_candidates) = args.top_k_candidates {
+          enb = enb.set_top_k_candidates(top_k_candidates);
+        }
+        Box::new(enb)
       },
       "enb_layers" => {
         let target_layers = args.target_layers.expect("enb_layer requires target_layers");
-        Box::new(ExploreStackIndexBuilder::exact_layers(
+        let mut enb = ExploreStackIndexBuilder::exact_layers(
           self.db_context.storage.as_ref().unwrap(),
           model_drafter,
           profile,
           self.db_context.store_prefix.as_ref().unwrap().clone(),
           target_layers,
-        ))
+        );
+        if let Some(top_k_candidates) = args.top_k_candidates {
+          enb = enb.set_top_k_candidates(top_k_candidates);
+        }
+        Box::new(enb)
       },
       "btree" => {
         Box::new(BoundedTopStackIndexBuilder::new(
           self.db_context.storage.as_ref().unwrap(),
           model_drafter,
           profile,
-          4096,
+          args.btree_load,
           self.db_context.store_prefix.as_ref().unwrap().clone(),
         ))
       },

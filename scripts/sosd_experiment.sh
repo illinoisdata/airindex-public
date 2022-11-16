@@ -25,9 +25,9 @@ REPEAT=$7
 RESET_SCRIPT=$8
 STORAGE=$9
 LOG_LEVEL="info"
-if [[ $ACTION != "build" && $ACTION != "benchmark" && $ACTION != "breakdown" ]]
+if [[ $ACTION != "build" && $ACTION != "benchmark" && $ACTION != "breakdown" && $ACTION != "inspect" && $ACTION != "buildtopk" ]]
 then
-  echo "Invalid ACTION [build | benchmark | breakdown]"
+  echo "Invalid ACTION [build | benchmark | breakdown | inspect | buildtopk]"
   exit 1
 fi
 if [[ $STORAGE == "nfs" ]]
@@ -44,12 +44,31 @@ echo "Using BLOB_ROOT=${BLOB_ROOT}, KEYSET_ROOT=${KEYSET_ROOT}, DB_ROOT=${DB_ROO
 sleep 5
 
 SOSD_BLOBS=(
+  # "books 200 uint32"
+  # "books 200 uint64"
+  # "books 400 uint64"
+  # "books 600 uint64"
   "books 800 uint64"
   "fb 200 uint64"
+  # "lognormal 200 uint32"
+  # "lognormal 200 uint64"
+  # "normal 200 uint32"
+  # "normal 200 uint64"
+  # "osm_cellids 200 uint64"
+  # "osm_cellids 400 uint64"
+  # "osm_cellids 600 uint64"
   "osm_cellids 800 uint64"
+  # "uniform_dense 200 uint32"
+  # "uniform_dense 200 uint64"
+  # "uniform_sparse 200 uint32"
+  # "uniform_sparse 200 uint64"
   "wiki_ts 200 uint64"
   "gmm_k100 800 uint64"
 )
+
+# SOSD_BLOBS=(
+#   "fb 1 uint64"  # for debugging
+# )
 
 build () {
   read -a sosd_blob <<< $1
@@ -93,6 +112,32 @@ breakdown () {
   done
 }
 
+inspect () {
+  read -a sosd_blob <<< $1
+  sosd_size=${sosd_blob[1]}
+  sosd_dtype=${sosd_blob[2]}
+  blob_name="${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}"
+  keyset_path="${KEYSET_ROOT}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}_ks"
+
+  set -x
+  RUST_LOG=airindex=${LOG_LEVEL},sosd_experiment=${LOG_LEVEL} RUST_BACKTRACE=full target/release/sosd_experiment --db-url "${DB_ROOT}/${blob_name}" --index-builder ${INDEX_BUILDER} --index-drafters=${INDEX_DRAFTERS} --out-path sosd_build_out.jsons --dataset-name blob --sosd-blob-url "${BLOB_ROOT}/${blob_name}" --keyset-url "${KEYSET_ROOT}/${blob_name}_ks" --sosd-dtype ${sosd_dtype} --sosd-size ${sosd_size} ${PROFILE} --no-cache --do-inspect
+  set +x
+}
+
+buildtopk () {
+  read -a sosd_blob <<< $1
+  sosd_size=${sosd_blob[1]}
+  sosd_dtype=${sosd_blob[2]}
+  blob_name="${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}"
+  keyset_path="${KEYSET_ROOT}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}_ks"
+
+  for k in {1..32} do
+    set -x
+    RUST_LOG=airindex=${LOG_LEVEL},sosd_experiment=${LOG_LEVEL} RUST_BACKTRACE=full target/release/sosd_experiment --db-url "${DB_ROOT}/${blob_name}" --index-builder ${INDEX_BUILDER} --index-drafters=${INDEX_DRAFTERS} --out-path sosd_build_out.jsons --dataset-name blob --sosd-blob-url "${BLOB_ROOT}/${blob_name}" --keyset-url "${KEYSET_ROOT}/${blob_name}_ks" --sosd-dtype ${sosd_dtype} --sosd-size ${sosd_size} ${PROFILE} --no-cache --do-build
+    set +x
+  done
+}
+
 for ((i = 0; i < ${#SOSD_BLOBS[@]}; i++)) do
   if [[ $ACTION == "build" ]]
   then
@@ -103,5 +148,11 @@ for ((i = 0; i < ${#SOSD_BLOBS[@]}; i++)) do
   elif [[ $ACTION == "breakdown" ]]
   then
     breakdown "${SOSD_BLOBS[$i]}"
+  elif [[ $ACTION == "inspect" ]]
+  then
+    inspect "${SOSD_BLOBS[$i]}"
+  elif [[ $ACTION == "buildtopk" ]]
+  then
+    buildtopk "${SOSD_BLOBS[$i]}"
   fi
 done

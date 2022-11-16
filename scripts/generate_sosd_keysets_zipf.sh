@@ -49,15 +49,17 @@ SOSD_BLOBS=(
 
 mkdir -p ${KEYSET_ROOT}
 for ((i = 0; i < ${#SOSD_BLOBS[@]}; i++)) do
-  for ((j = 0; j < ${NUM_SET}; j++)) do
-    read -a sosd_blob <<< "${SOSD_BLOBS[$i]}"
-    sosd_size=${sosd_blob[1]}
-    sosd_dtype=${sosd_blob[2]}
-    blob_path="${BLOB_ROOT}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}"
-    keyset_path="${KEYSET_ROOT}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}_ks_${j}"
+  for k in {0.5,1.0,2.0} do
+    for ((j = 0; j < ${NUM_SET}; j++)) do
+      read -a sosd_blob <<< "${SOSD_BLOBS[$i]}"
+      sosd_size=${sosd_blob[1]}
+      sosd_dtype=${sosd_blob[2]}
+      blob_path="${BLOB_ROOT}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}"
+      keyset_path="${KEYSET_ROOT}/${k}/${sosd_blob[0]}_${sosd_blob[1]}M_${sosd_blob[2]}_ks_${j}"
 
-    set -x
-    ./target/release/sosd_keyset --sosd-dtype ${sosd_dtype} --sosd-blob-path ${blob_path} --sosd-size ${sosd_size} --keyset-path ${keyset_path} --num-keyset ${NUM_KEYSET} --sosd-seed ${j}
-    set +x
+      set -x
+      ./target/release/sosd_keyset --sosd-dtype ${sosd_dtype} --sosd-blob-path ${blob_path} --sosd-size ${sosd_size} --keyset-path ${keyset_path} --num-keyset ${NUM_KEYSET} --sosd-seed ${j}  --zipf_power ${k}
+      set +x
+    done
   done
 done
