@@ -1,8 +1,8 @@
 # AirIndex: Versatile Index Tuning Through Data and Storage
 
-This is an instruction to benchmark AirIndex Manual and AirIndex (auto-tuned index) for experiments in AirIndex: Versatile Index Tuning Through Data and Storage.
+This is an instruction to benchmark B-tree, Data Calculator, and AirIndex (auto-tuned index) for experiments in AirIndex: Versatile Index Tuning Through Data and Storage.
 
-Please follow [dataset](https://github.com/illinoisdata/airindex-public/blob/main/dataset_setup.md) and [query key set](https://github.com/illinoisdata/airindex-public/blob/main/keyset_setup.md) instructions to setup the benchmarking environment. These are examples of environment [reset scripts](https://github.com/illinoisdata/airindex-public/blob/main/reload_examples.md). The following assumes that the dataset are under `/path/to/data/` and key sets are under `/path/to/keyset/`.
+Please follow [dataset](dataset_setup.md) (`dataset_setup.md`) and [query key set](keyset_setup.md) (`keyset_setup.md`) instructions to setup the benchmarking environment. These are examples of environment [reset scripts](reload_examples.md) (`reload_examples.md`). The following assumes that the dataset are under `/path/to/data/` and key sets are under `/path/to/keyset/`.
 
 ## Building the Binaries
 
@@ -16,7 +16,7 @@ cargo test
 ```
 
 
-## End-to-end Search Performance (6.2)
+## End-to-end Search Performance
 
 For each storage (e.g., NFS) you would like benchmark on, tune and build indexes for all datasets.
 ```bash
@@ -33,7 +33,7 @@ bash scripts/sosd_experiment.sh file:///path/to/data file:///path/to/keyset file
 The measurements will be recorded in `sosd_benchmark_out.jsons`.
 
 
-## Latency Breakdown (6.3)
+## Latency Breakdown
 
 Inspect a breakdown of the latency from existing built indexes by following commands.
 ```bash
@@ -44,9 +44,9 @@ bash scripts/sosd_experiment.sh file:///path/to/data file:///path/to/keyset file
 The measurements will be recorded in `sosd_breakdown_out.jsons`.
 
 
-## Skewed Workload (6.4)
+## Skewed Workload
 
-Generate skewed Zipfian keysets by following the [instruction](https://github.com/illinoisdata/airindex-public/blob/main/keyset_setup.md).
+Generate skewed Zipfian keysets by following the [instruction](keyset_setup.md) (`keyset_setup.md`).
 
 Then use the benchmark script by pointing to the skewed keysets.
 ```bash
@@ -54,7 +54,7 @@ bash scripts/sosd_experiment.sh file:///path/to/data file:///path/to/keyset/skew
 ```
 
 
-## Auto-tuning Accuracy (6.5)
+## Auto-tuning Accuracy
 
 Similarly to 5.2, build the AirIndex variants.
 ```bash
@@ -80,7 +80,7 @@ bash scripts/inspect.sh file:///path/to/data file:///path/to/keyset file:///path
 ```
 
 
-## Build Scalability (6.6)
+## Build Scalability
 
 To measure the build time, run the build script.
 ```bash
@@ -88,7 +88,7 @@ bash scripts/scale.sh file:///path/to/data file:///path/to/keyset file:///path/t
 ```
 
 
-## Top-k Candidate Parameter Sweep (6.7)
+## Top-k Candidate Parameter Sweep
 
 Build indexes with varying hyperparameter k by using a different action `buildtopk`.
 ```bash
@@ -96,7 +96,7 @@ bash scripts/sosd_experiment.sh file:///path/to/data file:///path/to/keyset file
 ````
 
 
-## Data Calculator (6.2 & 6.3 & 6.6)
+## Data Calculator
 
 To execute Data Calculator's auto-completion.
 ```bash
@@ -111,12 +111,12 @@ bash scripts/data_calculator_sosd.sh file:///path/to/data file:///path/to/keyset
 bash scripts/data_calculator_sosd.sh file:///path/to/data file:///path/to/keyset file:///path/to/data_calc benchmark 40 ~/reload_nfs.sh nfs
 ```
 
-To benchmark on skewed workload (6.3), generate skewed keysets and change the keyset path accordingly.
+To benchmark on skewed workload, generate skewed keysets and change the keyset path accordingly.
 
 
 ## Instructions for Other Baselines
 
-- LMDB: https://github.com/illinoisdata/lmdb/tree/mdb.master/libraries/liblmdb
-- RMI: https://github.com/illinoisdata/RMI/tree/master/tests/kv_test
-- PGM-index: https://github.com/illinoisdata/PGM-index/tree/master/kv_test
-- ALEX: https://github.com/illinoisdata/ALEX_ext
+- LMDB: https://anonymous.4open.science/r/lmdb-47F2/libraries/liblmdb/README.md
+- RMI: https://anonymous.4open.science/r/RMI-95C2/tests/kv_test/README.md
+- PGM-index: https://anonymous.4open.science/r/PGM-index-7626/kv_test/README.md
+- ALEX: https://anonymous.4open.science/r/ALEX_ext-8F68/README.md

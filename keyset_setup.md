@@ -1,6 +1,6 @@
 # Setup Keyset
 
-After setting up the [datasets](https://github.com/illinoisdata/airindex/blob/main/dataset_setup.md), clone AirIndex repository.
+After setting up the [datasets](dataset_setup.md) (`dataset_setup.md`), clone AirIndex repository.
 ```bash
 git clone https://github.com/illinoisdata/airindex-public.git
 cd airindex-public

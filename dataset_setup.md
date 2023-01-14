@@ -1,6 +1,6 @@
 # Setup Dataset
 
-Clone SOSD repository.
+Clone SOSD repository (https://anonymous.4open.science/r/SOSD-03E7).
 ```bash
 git clone https://github.com/illinoisdata/SOSD.git
 cd SOSD
