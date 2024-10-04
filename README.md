@@ -1,8 +1,8 @@
 # AirIndex: Versatile Index Tuning Through Data and Storage
 
-This is an instruction to benchmark AirIndex Manual and AirIndex (auto-tuned index) for experiments in AirIndex: Versatile Index Tuning Through Data and Storage.
+This is an instruction to benchmark B-tree, Data Calculator, and AirIndex (auto-tuned index) for experiments in AirIndex: Versatile Index Tuning Through Data and Storage.
 
-Please follow [dataset](https://github.com/illinoisdata/airindex-public/blob/main/dataset_setup.md) and [query key set](https://github.com/illinoisdata/airindex-public/blob/main/keyset_setup.md) instructions to setup the benchmarking environment. These are examples of environment [reset scripts](https://github.com/illinoisdata/airindex-public/blob/main/reload_examples.md). The following assumes that the dataset are under `/path/to/data/` and key sets are under `/path/to/keyset/`.
+Please follow [dataset](dataset_setup.md) (`dataset_setup.md`) and [query key set](keyset_setup.md) (`keyset_setup.md`) instructions to setup the benchmarking environment. These are examples of environment [reset scripts](reload_examples.md) (`reload_examples.md`). The following assumes that the dataset are under `/path/to/data/` and key sets are under `/path/to/keyset/`.
 
 ## Building the Binaries
 
@@ -46,7 +46,7 @@ The measurements will be recorded in `sosd_breakdown_out.jsons`.
 
 ## Skewed Workload (6.4)
 
-Generate skewed Zipfian keysets by following the [instruction](https://github.com/illinoisdata/airindex-public/blob/main/keyset_setup.md).
+Generate skewed Zipfian keysets by following the [instruction](keyset_setup.md) (`keyset_setup.md`).
 
 Then use the benchmark script by pointing to the skewed keysets.
 ```bash
