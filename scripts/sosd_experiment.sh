@@ -1,4 +1,4 @@
-#/!bin/bash
+#!/bin/bash
 
 int_handler() {
     echo "Interrupted."
